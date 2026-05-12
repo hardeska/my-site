@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardys | На чилле</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #ffffff;
+            overflow: hidden;
+            position: relative;
+            background-color: #020617;
+        }
+
+        /* --- СТИЛИ ЭКРАНА ЗАГРУЗКИ (PRELOADER) --- */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #020617;
+            z-index: 9999; /* Поверх абсолютно всего */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        /* Крутящееся неоновое кольцо */
+        .loader-ring {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+            border-top: 4px solid #00f2fe;
+            border-bottom: 4px solid #ff007f;
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+
+        .loader-text {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: #cbd5e1;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Класс для скрытия прелоадера через JS */
+        .preloader-hidden {
+            opacity: 0 !important;
+            pointer-events: none;
+            transform: scale(1.05);
+        }
+
+        /* --- НАСТРОЙКИ ВИДЕО НА ЗАДНЕМ ПЛАНЕ --- */
+        .bg-video {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            width: 110%;
+            height: auto;
+            z-index: -100;
+            transform: translateX(-50%) translateY(-50%);
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 23, 0.4);
+            z-index: -99;
+        }
+
+        /* --- ЭФФЕКТЫ ПОВЕРХ ВИДЕО --- */
+        .space-dust {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -98;
+            pointer-events: none;
+        }
+
+        .dust-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: floatDust 8s ease-in-out infinite alternate;
+        }
+
+        .dust-particle:nth-child(1) { width: 4px; height: 4px; top: 20%; left: 15%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8; animation-duration: 10s; }
+        .dust-particle:nth-child(2) { width: 6px; height: 6px; top: 65%; left: 25%; background: #b5179e; box-shadow: 0 0 12px #b5179e; animation-duration: 14s; animation-delay: -2s; }
+        .dust-particle:nth-child(3) { width: 3px; height: 3px; top: 40%; left: 75%; background: #00f2fe; box-shadow: 0 0 8px #00f2fe; animation-duration: 9s; animation-delay: -4s; }
+        .dust-particle:nth-child(4) { width: 5px; height: 5px; top: 80%; left: 70%; background: #7209b7; box-shadow: 0 0 10px #7209b7; animation-duration: 12s; animation-delay: -1s; }
+
+        @keyframes floatDust {
+            0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.3; }
+            50% { transform: translateY(-30px) translateX(15px) scale(1.2); opacity: 0.8; }
+            100% { transform: translateY(-10px) translateX(-15px) scale(0.9); opacity: 0.4; }
+        }
+
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -97;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff, 0 0 20px #fff;
+            animation: shoot 4s linear infinite;
+            opacity: 0;
+        }
+
+        .star:nth-child(1) { top: 15%; left: 25%; animation-delay: 0s; animation-duration: 3s; }
+        .star:nth-child(2) { top: 35%; left: 85%; animation-delay: 1.5s; animation-duration: 4s; }
+        .star:nth-child(3) { top: 55%; left: 15%; animation-delay: 3s; animation-duration: 3.5s; }
+
+        @keyframes shoot {
+            0% { transform: translateX(0) translateY(0) rotate(-45deg) scale(0); opacity: 0; }
+            10% { opacity: 1; transform: translateX(-50px) translateY(50px) rotate(-45deg) scale(1); }
+            100% { transform: translateX(-300px) translateY(300px) rotate(-45deg) scale(0); opacity: 0; }
+        }
+
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.25;
+            z-index: -96;
+        }
+        body::before { top: -5%; left: 10%; background: linear-gradient(45deg, #b5179e, #7209b7); }
+        body::after { bottom: -5%; right: 10%; background: linear-gradient(45deg, #00f2fe, #4facfe); }
+
+        /* Главная карточка */
+        .container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 40px 30px;
+            border-radius: 30px;
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+            animation: scaleUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes scaleUp {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .music-player {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        .music-player:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- ГЛИТЧ-ЭФФЕКТ ДЛЯ НИКНЕЙМА --- */
+        .glitch-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            position: relative;
+            display: inline-block;
+            color: #fff;
+        }
+
+        .glitch-title::before,
+        .glitch-title::after {
+            content: 'Hardys';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+
+        .glitch-title::before {
+            left: 2px;
+            text-shadow: -1px 0 #ff007f;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch-title::after {
+            left: -2px;
+            text-shadow: -1px 0 #00f2fe;
+            clip: rect(85px, 450px, 140px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(15px, 9999px, 66px, 0); }
+            10% { clip: rect(34px, 9999px, 55px, 0); }
+            20% { clip: rect(1px, 9999px, 22px, 0); }
+            30% { clip: rect(67px, 9999px, 89px, 0); }
+            40% { clip: rect(12px, 9999px, 34px, 0); }
+            50% { clip: rect(88px, 9999px, 99px, 0); }
+            60% { clip: rect(4px, 9999px, 15px, 0); }
+            70% { clip: rect(56px, 9999px, 78px, 0); }
+            80% { clip: rect(23px, 9999px, 45px, 0); }
+            90% { clip: rect(78px, 9999px, 91px, 0); }
+            100% { clip: rect(10px, 9999px, 25px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(60px, 9999px, 80px, 0); }
+            10% { clip: rect(12px, 9999px, 45px, 0); }
+            20% { clip: rect(76px, 9999px, 90px, 0); }
+            30% { clip: rect(3px, 9999px, 18px, 0); }
+            40% { clip: rect(55px, 9999px, 67px, 0); }
+            50% { clip: rect(22px, 9999px, 34px, 0); }
+            60% { clip: rect(89px, 9999px, 100px, 0); }
+            70% { clip: rect(14px, 9999px, 56px, 0); }
+            80% { clip: rect(67px, 9999px, 78px, 0); }
+            90% { clip: rect(33px, 9999px, 44px, 0); }
+            100% { clip: rect(45px, 9999px, 60px, 0); }
+        }
+
+        .status {
+            font-size: 15px;
+            color: #38bdf8;
+            margin-bottom: 30px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            min-height: 22px;
+        }
+
+        .links-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 15px 25px;
+            border-radius: 16px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            transition: all 0.25s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+        }
+
+        .btn-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            margin-right: 15px;
+            border-radius: 6px;
+            transition: transform 0.25s ease;
+        }
+
+        .btn:hover .btn-icon {
+            transform: scale(1.2);
+        }
+
+        .youtube { background: rgba(239, 68, 68, 0.08); }
+        .youtube:hover { 
+            background: #ef4444; 
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .roblox { background: rgba(255, 255, 255, 0.04); }
+        .roblox:hover { 
+            background: #ffffff; 
+            color: #000000;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .vk { background: rgba(0, 119, 255, 0.08); }
+        .vk:hover { 
+            background: #0077ff; 
+            box-shadow: 0 0 25px rgba(0, 119, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .discord { background: rgba(88, 101, 242, 0.08); }
+        .discord:hover {
+            background: #5865f2;
+            box-shadow: 0 0 25px rgba(88, 101, 242, 0.5);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЭКРАН ЗАГРУЗКИ -->
+    <div id="preloader">
+        <div class="loader-ring"></div>
+        <div class="loader-text">HARDYS PROJECTS</div>
+    </div>
+
+    <!-- Тег видео -->
+    <video autoplay loop muted playsinline class="bg-video" id="my-bg-video">
+        <source src="" type="video/mp4">
+    </video>
+    <div class="video-overlay"></div>
+
+    <div class="space-dust">
+        <div class="dust-particle"></div>
+        <div class="dust-particle"></div>
+        <div class="dust-particle"></div>
+        <div class="dust-particle"></div>
+    </div>
+
+    <div class="stars">
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+    </div>
+
+    <audio id="bg-music" src="soundhelix.com" loop></audio>
+
+    <div class="container">
+        <div class="music-player" id="music-btn" onclick="toggleMusic()">🎵</div>
+
+        <div class="avatar-container">
+            <img src="logoimg.jpg" alt="Hardys" class="avatar">
+        </div>
+
+        <h1 class="glitch-title">HardyS</h1>
+        
+        <div class="status" id="dynamic-status">на чилле 😎</div>
+        
+        <div class="links-container">
+            <a href="https://youtube.com" target="_blank" class="btn youtube">
+                <img src="YTlogo.png" class="btn-icon" alt="">
+                YouTube
+            </a>
+
+            <a href="https://roblox.com" target="_blank" class="btn roblox">
+                <img src="rbxlogo.jpg" class="btn-icon" alt="">
+                Roblox
+            </a>
+
+            <a href="https://vk.com" target="_blank" class="btn vk">
+                <img src="vkLogo.png" class="btn-icon" alt="">
+                ВКонтакте
+            </a>
+
+            <div class="btn discord" onclick="copyDiscord(this)">
+                <img src="dsLogo.png" class="btn-icon" alt="">
+                <span>Скопировать Discord</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videos = [
+            "fonn.mp4",
+            "obou1.mp4",
+            "obou2.mp4",
+            "obou3.mp4"
+        ];
+
+        const statuses = [
+            "на чилле 😎",
+            "изучаю код 💻",
+            "время играть в Roblox 🎮",
+            "смотрю YouTube 🍿",
+            "offline 💤",
+            "просто отдыхаю ✨",
+            "Люблю Алинку 🥰"
+        ];
+
+        function initSite() {
+            // Инициализация статуса
+            const statusElement = document.getElementById('dynamic-status');
+            const randomStatusIndex = Math.floor(Math.random() * statuses.length);
+            statusElement.textContent = statuses[randomStatusIndex];
+
+            // Инициализация случайного видео
+            const videoElement = document.getElementById('my-bg-video');
+            const randomVideoIndex = Math.floor(Math.random() * videos.length);
+            
+            videoElement.src = videos[randomVideoIndex];
+            videoElement.load();
+            
+            // Как только видео сможет воспроизводиться — скрываем прелоадер
+            videoElement.oncanplaythrough = function() {
+                videoElement.play();
+                setTimeout(() => {
+                    document.getElementById('preloader').classList.add('preloader-hidden');
+                }, 500); // Небольшая задержка для плавности
+            };
+
+            // Страховка: если видео грузится слишком долго, всё равно убираем прелоадер через 2.5 секунды
+            setTimeout(() => {
+                const loader = document.getElementById('preloader');
+                if (!loader.classList.contains('preloader-hidden')) {
+                    loader.classList.add('preloader-hidden');
+                    videoElement.play();
+                }
+            }, 2500);
+        }
+
+        function copyDiscord(element) {
+            const myDiscordTag = "Hardys#0000"; 
+            navigator.clipboard.writeText(myDiscordTag).then(() => {
+                const textSpan = element.querySelector('span');
+                const oldText = textSpan.textContent;
+                textSpan.textContent = "Скопировано!";
+                setTimeout(() => { textSpan.textContent = oldText; }, 2000);
+            });
+        }
+
+        const music = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-btn');
+
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                musicBtn.textContent = '⏸️';
+                musicBtn.style.boxShadow = "0 0 15px rgba(255,255,255,0.6)";
+            } else {
+                music.pause();
+                musicBtn.textContent = '🎵';
+                musicBtn.style.boxShadow = "none";
+            }
+        }
+
+        window.onload = initSite;
+    </script>
+
+</body>
+</html>
